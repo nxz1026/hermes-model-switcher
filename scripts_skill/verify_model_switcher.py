@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""hermes-model-switcher 连通性验证脚本。
+"""Hermes-model-switcher connectivity verification script.
 
-用法：
-  python3 verify_model_switcher.py          # 全部测试
-  python3 verify_model_switcher.py --quick  # 只测主模型
-  python3 verify_model_switcher.py --json   # JSON 输出（CI/cron）
+Usage::
 
-生成 JSON 报告供 SkillOpt gate / cron / human 审阅。
+    python3 verify_model_switcher.py           # run all tests
+    python3 verify_model_switcher.py --quick    # test only the current model
+    python3 verify_model_switcher.py --json     # JSON output (CI / cron)
 """
+
 import argparse
 import json
 import sys
@@ -18,9 +18,15 @@ import httpx
 import yaml
 from dotenv import dotenv_values
 
-CONFIG_PATH = "/root/.hermes/config.yaml"
-ENV_PATH = "/root/.hermes/.env"
-SKILL_PATH = "/root/.hermes/skills/devops/hermes-model-switcher/SKILL.md"
+# ── Default paths (can be overridden via env vars) ────────────────────────
+CONFIG_PATH = Path(__file__).resolve().parent.parent / ".hermes" / "config.yaml"
+ENV_PATH = Path.home() / ".hermes" / ".env"
+SKILL_PATH = Path.home() / ".hermes" / "skills" / "devops" / "hermes-model-switcher" / "SKILL.md"
+
+# Override from environment when running outside the repo
+CONFIG_PATH = Path(__file__).resolve().parent.parent / ".hermes" / "config.yaml"
+if not CONFIG_PATH.exists():
+    CONFIG_PATH = Path.home() / ".hermes" / "config.yaml"
 
 PROVIDER_TESTS = [
     ("custom/xunfei", "https://maas-api.cn-huabei-1.xf-yun.com/v2", None, "xopqwen36v35b"),
@@ -34,12 +40,13 @@ PROVIDER_TESTS = [
 ]
 
 
-def load_env():
+def load_env() -> dict[str, str | None]:
     return dotenv_values(ENV_PATH)
 
 
 def load_custom_key(name: str) -> tuple[str, str]:
-    cfg = yaml.safe_load(Path(CONFIG_PATH).read_text())
+    """Look up a custom provider api_key/base_url from the config file."""
+    cfg = yaml.safe_load(CONFIG_PATH.read_text())
     for cp in cfg.get("custom_providers", []):
         cp_name = cp.get("name", "").lower()
         if cp_name in name.lower() or name.lower() in cp_name:
@@ -52,7 +59,8 @@ def test_provider(name: str, base_url: str, env_key: str | None, model: str) -> 
     env = load_env()
     key = ""
     if env_key:
-        key = env.get(env_key, "")
+        key = env.get(env_key, "") or ""
+
     if not key:
         cp_key, cp_url = load_custom_key(name.split("/")[0])
         if cp_key:
@@ -78,11 +86,16 @@ def test_provider(name: str, base_url: str, env_key: str | None, model: str) -> 
     start = time.time()
     try:
         with httpx.Client(timeout=10, follow_redirects=False) as c:
-            r = c.post(f"{base_url}/chat/completions", headers=headers, json=payload)
+            r = c.post(f"{base_url.rstrip('/')}/chat/completions", headers=headers, json=payload)
             elapsed = time.time() - start
             if r.status_code == 200:
                 usage = r.json().get("usage", {})
-                return {"name": name, "status": "✅", "detail": f"{elapsed:.1f}s tokens={usage.get('total_tokens','-')}", "elapsed_s": round(elapsed, 2)}
+                return {
+                    "name": name,
+                    "status": "✅",
+                    "detail": f"{elapsed:.1f}s tokens={usage.get('total_tokens', '-')}",
+                    "elapsed_s": round(elapsed, 2),
+                }
             elif r.status_code in (401, 403):
                 return {"name": name, "status": "🔑", "detail": "key 无效/过期"}
             elif r.status_code == 404:
@@ -98,11 +111,16 @@ def test_provider(name: str, base_url: str, env_key: str | None, model: str) -> 
         return {"name": name, "status": "❌", "detail": f"{type(e).__name__}: {str(e)[:100]}"}
 
 
-def verify_skill_md():
+def verify_skill_md() -> dict:
     p = Path(SKILL_PATH)
     if p.exists():
         content = p.read_text()
-        return {"path": str(SKILL_PATH), "exists": True, "lines": len(content.splitlines()), "size_bytes": len(content.encode())}
+        return {
+            "path": str(SKILL_PATH),
+            "exists": True,
+            "lines": len(content.splitlines()),
+            "size_bytes": len(content.encode()),
+        }
     return {"path": str(SKILL_PATH), "exists": False}
 
 
@@ -113,7 +131,7 @@ def main():
     args = parser.parse_args()
 
     if args.quick:
-        cfg = yaml.safe_load(Path(CONFIG_PATH).read_text())
+        cfg = yaml.safe_load(CONFIG_PATH.read_text())
         model_cfg = cfg.get("model", {})
         default = model_cfg.get("default", "")
         base_url = model_cfg.get("base_url", "")
@@ -145,11 +163,13 @@ def main():
         print(json.dumps({"summary": summary, "results": results}, indent=2, ensure_ascii=False))
     else:
         print(f"\n🔍 hermes-model-switcher 连通性验证 ({summary['timestamp']})")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         for r in results:
             print(f"{r['status']:6} {r['name']:35} {r['detail']}")
+        lines = skill.get("lines", 0)
+        bytes_ = skill.get("size_bytes", 0)
         print(f"\n📊 总计: {summary['total']} | ✅ {ok} | 🔑KEY {empty} | ⏳429 {rate} | 🔑 {warn} | ❌ {fail}")
-        print(f"\n📄 SKILL.md: {skill['lines']} 行, {skill['size_bytes']} 字节" + (" (不存在！)" if not skill['exists'] else ""))
+        print(f"\n📄 SKILL.md: {lines} 行, {bytes_} 字节" + (" (不存在！)" if not skill['exists'] else ""))
 
     return 0 if ok > 0 else 1
 

@@ -1,3 +1,5 @@
+"""CLI entry point for hermes-switch."""
+
 import argparse
 import subprocess
 import sys
@@ -15,6 +17,7 @@ from . import (
 
 
 def pick_with_fzf(models, current_key):
+    """Launch fzf for interactive model selection."""
     rows = "\n".join(
         f"{'●' if m['key'] == current_key else '○'}  {m['key']:40s}  {m['label']}"
         for m in models
@@ -34,13 +37,12 @@ def pick_with_fzf(models, current_key):
             return None
         key = line.split()[1]
         return key
-    except FileNotFoundError:
-        return None
-    except subprocess.TimeoutExpired:
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         return None
 
 
 def pick_builtin(models, current_key):
+    """Number-based built-in interactive picker."""
     print()
     for i, m in enumerate(models, 1):
         marker = "●" if m["key"] == current_key else "○"
@@ -56,15 +58,30 @@ def pick_builtin(models, current_key):
                 return models[idx]["key"]
         except (ValueError, IndexError):
             pass
-        print(f"  Invalid choice, try again.")
+        print("  Invalid choice, try again.")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Switch Hermes main model")
-    parser.add_argument("--config", "-c", help="Path to config file")
-    parser.add_argument("--list", "-l", action="store_true", help="List available models and exit")
-    parser.add_argument("--no-fzf", action="store_true", help="Use built-in selector even if fzf is available")
-    parser.add_argument("model", nargs="?", help="Model key to switch to (e.g. deepseek/deepseek-v4-flash)")
+    parser.add_argument(
+        "--config", "-c",
+        help="Path to config file",
+    )
+    parser.add_argument(
+        "--list", "-l",
+        action="store_true",
+        help="List available models and exit",
+    )
+    parser.add_argument(
+        "--plain",
+        action="store_true",
+        help="Use the built-in selector instead of fzf even when fzf is available",
+    )
+    parser.add_argument(
+        "model",
+        nargs="?",
+        help="Model key to switch to (e.g. deepseek/deepseek-chat)",
+    )
     args = parser.parse_args()
 
     config_path = find_config(args.config)
@@ -92,7 +109,7 @@ def main():
 
     target = args.model
     if not target:
-        if not args.no_fzf and _has_fzf():
+        if not args.plain and _has_fzf():
             target = pick_with_fzf(models, current)
         else:
             target = pick_builtin(models, current)
@@ -113,13 +130,12 @@ def main():
     print(f"Previous:  {current or '(not set)'}")
     print(f"Current:   {target}")
 
-    # 调 hermes gateway reload 让新配置生效
     ok, msg = reload_gateway()
     if ok:
-        print(f"Reload:    ok (gateway reloaded)")
+        print(f"Gateway:   ok (gateway restarted)")
     else:
-        print(f"Reload:    skipped — {msg}")
-        print(f"           Run manually: hermes gateway reload")
+        print(f"Gateway:   skipped — {msg}")
+        print(f"           Run manually: hermes gateway restart")
 
 
 def _has_fzf():
