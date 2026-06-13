@@ -27,6 +27,7 @@ ENV_PROVIDER_HINTS = {
     "OPENROUTER_API_KEY": "openrouter",
     "QINIU_API_KEY": "qiniu",
     "XAI_API_KEY": "xai",
+    "XUNFEI_API_KEY": "xunfei",
     "TAVILY_API_KEY": "tavily",  # search-only, 不在切换列表
 }
 
@@ -38,15 +39,17 @@ PROVIDER_DEFAULT_MODELS = {
     "openrouter": [("anthropic/claude-sonnet-4-20250514", "Claude Sonnet 4"), ("openai/gpt-4o-2025-01-20", "GPT-4o")],
     "qiniu": [("qwen2.5-72b-instruct", "Qwen 72B (七牛)")],
     "xai": [("grok-3-beta", "Grok 3 Beta")],
+    "xunfei": [("xopqwen36v35b", "Qwen 36v35B (讯飞)")],
 }
 
 PROVIDER_ENDPOINT = {
     "deepseek":    {"env_key": "DEEPSEEK_API_KEY",   "base_url": "https://api.deepseek.com",                    "compat": "openai"},
     "dashscope":   {"env_key": "DASHSCOPE_API_KEY",  "base_url": "https://dashscope.aliyuncs.com/compatible-mode", "compat": "openai"},
-    "minimax-cn":  {"env_key": "MINIMAX_CN_API_KEY", "base_url": "https://api.minimaxi.com",                      "compat": "anthropic"},
+    "minimax-cn":  {"env_key": "MINIMAX_CN_API_KEY", "base_url": "https://api.minimaxi.com/anthropic",            "compat": "anthropic"},
     "openrouter":  {"env_key": "OPENROUTER_API_KEY", "base_url": "https://openrouter.ai/api/v1",                 "compat": "openai"},
     "qiniu":       {"env_key": "QINIU_API_KEY",      "base_url": "https://maas-api.cn-huabei-1.xf-yun.com/v2",   "compat": "openai"},
     "xai":         {"env_key": "XAI_API_KEY",        "base_url": "https://api.x.ai",                             "compat": "openai"},
+    "xunfei":      {"env_key": "XUNFEI_API_KEY",     "base_url": "https://maas-api.cn-huabei-1.xf-yun.com/v2",   "compat": "openai"},
 }
 
 
