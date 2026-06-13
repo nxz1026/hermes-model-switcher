@@ -20,34 +20,24 @@ hermes-switch --help    # 完整帮助
 
 ## 命令行用法
 
-列出所有可用模型 + 当前活跃：
-
 ```bash
+# 列出所有可用模型 + 当前活跃
 hermes-switch --list
-```
 
-切换到指定模型：
-
-```bash
+# 切换到指定模型
 hermes-switch <provider>/<model_id>
-```
 
-示例：
-
-```bash
-# 切换到 OpenRouter 的 Claude
+# 示例：切换到 OpenRouter 的 Claude
 hermes-switch openrouter/claude-sonnet-4
 
-# 切换到 DeepSeek
+# 示例：切换到 DeepSeek
 hermes-switch deepseek/deepseek-chat
 
-# 切换回当前主模型（讯飞）
+# 示例：切换回当前主模型（讯飞）
 hermes-switch custom/xopqwen36v35b
 ```
 
 ## 输出格式
-
-运行 `hermes-switch --list` 会输出类似如下：
 
 ```
 📁 Config: /root/.hermes/config.yaml
@@ -59,13 +49,12 @@ hermes-switch custom/xopqwen36v35b
   ○ dashscope/qwen-plus             (dashscope, default: qwen-plus)
 ```
 
-- `●` — 当前活跃
-- `○` — 可用
+`●` 当前活跃，`○` 可用。
 
 ## 支持的 Provider
 
 | Provider | 环境变量 | base_url | compat |
-|----------|----------|----------|--------|
+|----------|---------|----------|--------|
 | deepseek | `DEEPSEEK_API_KEY` | `api.deepseek.com` | openai |
 | openrouter | `OPENROUTER_API_KEY` | `openrouter.ai/api/v1` | openai |
 | dashscope | `DASHSCOPE_API_KEY` | `dashscope.aliyuncs.com/compatible-mode` | openai |
@@ -74,15 +63,11 @@ hermes-switch custom/xopqwen36v35b
 
 ## 添加新 Provider
 
-在三个配置字典中分别注册：
-
-1. `ENV_PROVIDER_HINTS` — 映射 env key → provider 名
-2. `PROVIDER_DEFAULT_MODELS` — 注册默认模型列表
-3. `PROVIDER_ENDPOINT` — 注册 base_url + compat
+1. 在 `ENV_PROVIDER_HINTS` 中映射 env key → provider 名
+2. 在 `PROVIDER_DEFAULT_MODELS` 中注册默认模型
+3. 在 `PROVIDER_ENDPOINT` 中注册 base_url + compat
 
 ## 连通性验证
-
-提供 `scripts/verify_model_switcher.py` 用于自动化验证：
 
 ```bash
 # 全部测试
@@ -96,7 +81,6 @@ python3 scripts/verify_model_switcher.py --json
 ```
 
 输出示例：
-
 ```
 🔍 hermes-model-switcher 连通性验证 (2026-06-13 06:17:33)
 ============================================================
@@ -131,19 +115,11 @@ hermes-model-switcher/
 
 ## 注意事项
 
-- `config.yaml` 修改后需要 `/reset` 或 gateway `restart` 才能生效
-- `.env` 中的 key 值不能有空格（`KEY= value` 会失败）
+- `config.yaml` 修改需要 `/reset` 或 gateway `restart` 生效
+- `.env` 中的 key 不能有前导空格（`KEY= value` 会失败）
 - minimax-cn 的 base_url 必须包含 `/anthropic` 后缀
-- gateway 没有 `reload` 子命令，只能用 `restart`
+- gateway 无 `reload` 子命令，只支持 `restart`
 
 ## License
 
 MIT
-
----
-
-## About
-
-- **Author**: [nxz1026](https://github.com/nxz1026)
-- **Project**: [hermes-model-switcher](https://github.com/nxz1026/hermes-model-switcher)
-- **License**: MIT
