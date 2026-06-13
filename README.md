@@ -139,3 +139,11 @@ hermes-model-switcher/
 ## License
 
 MIT
+
+---
+
+## About
+
+- **Author**: [nxz1026](https://github.com/nxz1026)
+- **Project**: [hermes-model-switcher](https://github.com/nxz1026/hermes-model-switcher)
+- **License**: MIT
