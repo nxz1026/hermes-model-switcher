@@ -3,6 +3,9 @@ name = "hermes-model-switcher"
 version = "0.1.0"
 description = "Switch Hermes main model from the command line"
 requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0",
+]
 
 [project.scripts]
 hermes-switch = "hermes_switch.__main__:main"

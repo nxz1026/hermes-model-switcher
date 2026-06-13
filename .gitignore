@@ -3,3 +3,6 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+
+# hermes-model-switcher 备份
+*.backup

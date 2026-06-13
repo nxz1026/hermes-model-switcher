@@ -8,6 +8,7 @@ from . import (
     find_config,
     get_current_model,
     load_config,
+    reload_gateway,
     save_config,
     set_model,
 )
@@ -111,6 +112,14 @@ def main():
     print(f"Backup:    {backup_path}")
     print(f"Previous:  {current or '(not set)'}")
     print(f"Current:   {target}")
+
+    # 调 hermes gateway reload 让新配置生效
+    ok, msg = reload_gateway()
+    if ok:
+        print(f"Reload:    ok (gateway reloaded)")
+    else:
+        print(f"Reload:    skipped — {msg}")
+        print(f"           Run manually: hermes gateway reload")
 
 
 def _has_fzf():
